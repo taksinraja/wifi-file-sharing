@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wi-Fi File Sharing</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #928DAB;      /* Gray */
+            --primary-dark: #1F1C2C;       /* Steel Gray */
+            --secondary-color: #F5F5F7;    /* Light background */
+            --text-color: #1F1C2C;         /* Dark text */
+            --accent-color: #928DAB;       /* Accent gray */
+            --success-color: #10B981;      /* Keep success green */
+            --danger-color: #EF4444;       /* Keep danger red */
+            --border-radius: 16px;
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            background: var(--secondary-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            color: var(--text-color);
+            min-height: 100vh;
+        }
+
+        .main-container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 20px rgba(146, 141, 171, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .upload-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .drag-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 30px 20px;
+            border: 2px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            text-align: center;
+            transition: var(--transition);
+            background: rgba(146, 141, 171, 0.05);
+            cursor: pointer;
+        }
+
+        .drag-area:hover {
+            background: rgba(146, 141, 171, 0.1);
+            border-color: var(--primary-dark);
+        }
+
+        .drag-area.active {
+            background: rgba(146, 141, 171, 0.1);
+            border-style: solid;
+        }
+
+        .drag-area i {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+        }
+
+        .drag-area h4 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .drag-area p {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        .drag-area .btn {
+            min-width: 200px;
+            margin: 0;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 25px;
+            transition: var(--transition);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .files-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .files-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .files-header h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .sort-buttons .btn {
+            background: var(--secondary-color);
+            color: var(--text-color);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            transition: var(--transition);
+        }
+
+        .sort-buttons .btn:hover {
+            background: rgba(146, 141, 171, 0.1);
+            color: var(--primary-color);
+        }
+
+        .sort-buttons .btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .file-item {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: var(--transition);
+            border: 1px solid rgba(146, 141, 171, 0.1);
+        }
+
+        .file-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(146, 141, 171, 0.15);
+        }
+
+        .file-icon {
+            color: var(--primary-color);
+            background: rgba(146, 141, 171, 0.1);
+            padding: 12px;
+            border-radius: 12px;
+        }
+
+        .file-name {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: var(--text-color);
+        }
+
+        .file-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .file-meta i {
+            width: 16px;
+            text-align: center;
+            margin-right: 4px;
+        }
+
+        .action-buttons .btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        .btn-download {
+            background: var(--primary-color) !important;
+            color: white;
+            border: none;
+            transition: var(--transition);
+        }
+
+        .btn-download:hover {
+            background: var(--primary-dark) !important;
+            transform: translateY(-1px);
+            color: white;
+        }
+
+        .btn-delete {
+            background: var(--primary-dark) !important;
+            color: white;
+            border: none;
+            transition: var(--transition);
+        }
+
+        .btn-delete:hover {
+            background: var(--primary-color) !important;
+            transform: translateY(-1px);
+        }
+
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+            margin-top: 20px;
+            background: var(--secondary-color);
+        }
+
+        .progress-bar {
+            background: linear-gradient(to right, var(--primary-color), var(--primary-dark));
+        }
+
+        /* Toast customization */
+        .toast {
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .bg-success {
+            background: var(--success-color) !important;
+        }
+
+        .bg-danger {
+            background: var(--danger-color) !important;
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 15px;
+            }
+
+            .header {
+                padding: 20px;
+                text-align: center;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .drag-area {
+                padding: 20px 15px;
+            }
+
+            .drag-area i {
+                font-size: 2rem;
+            }
+
+            .drag-area h4 {
+                font-size: 1rem;
+            }
+
+            .drag-area .btn {
+                width: 80%;
+                max-width: 200px;
+            }
+
+            .files-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .sort-buttons {
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                overflow-x: auto;
+                padding-bottom: 5px;
+            }
+
+            .sort-buttons .btn {
+                padding: 6px 12px;
+                font-size: 0.85rem;
+                white-space: nowrap;
+            }
+
+            .file-item {
+                padding: 12px;
+            }
+
+            .file-meta {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .file-meta span {
+                font-size: 0.8rem;
+            }
+
+            .action-buttons {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin-top: 10px;
+            }
+
+            .btn {
+                padding: 10px;
+                font-size: 0.9rem;
+                height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+            }
+
+            .url-group {
+                margin-bottom: 15px;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            .input-group .form-control {
+                border-radius: 10px;
+                margin-bottom: 8px;
+                font-size: 0.9rem;
+            }
+
+            .input-group .btn {
+                border-radius: 10px;
+                width: 100%;
+                margin-left: 0;
+                margin-bottom: 5px;
+            }
+
+            /* Better touch targets */
+            .btn {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            /* Improved file layout */
+            .file-item .row {
+                flex-direction: column;
+            }
+
+            .file-icon {
+                margin-bottom: 10px;
+            }
+
+            .file-name {
+                font-size: 1rem;
+                word-break: break-all;
+            }
+
+            /* Better spacing */
+            .upload-section, .files-section {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            /* Toast positioning */
+            .toast-container {
+                bottom: 10px;
+                right: 10px;
+                left: 10px;
+            }
+
+            .toast {
+                margin-bottom: 10px;
+            }
+
+            /* Access info section */
+            .access-info {
+                padding: 15px;
+            }
+
+            .access-instructions {
+                font-size: 0.85rem;
+            }
+
+            .access-instructions li {
+                margin-bottom: 8px;
+            }
+        }
+
+        /* Additional improvements for very small screens */
+        @media (max-width: 380px) {
+            .header h1 {
+                font-size: 1.3rem;
+            }
+
+            .file-name {
+                font-size: 0.9rem;
+            }
+
+            .btn {
+                font-size: 0.85rem;
+            }
+
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .file-meta {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .access-info {
+            background: white !important;
+            border: 1px solid rgba(146, 141, 171, 0.1) !important;
+            padding: 20px !important;
+        }
+
+        .access-section h5 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .access-section h5 i {
+            margin-right: 8px;
+        }
+
+        .url-item {
+            background: var(--secondary-color);
+            padding: 10px;
+            border-radius: var(--border-radius);
+        }
+
+        .url-item .input-group {
+            flex-wrap: nowrap;
+        }
+
+        .url-item .form-control {
+            background: white;
+            font-size: 0.9rem;
+            border: 1px solid rgba(146, 141, 171, 0.2);
+        }
+
+        .url-item .btn {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .url-item .input-group {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+
+            .url-item .form-control {
+                width: 100%;
+                margin-bottom: 5px;
+                border-radius: var(--border-radius);
+            }
+
+            .url-item .btn {
+                flex: 1;
+                border-radius: var(--border-radius);
+            }
+        }
+
+        /* Update URL section buttons */
+        .url-item .btn-primary {
+            background: var(--primary-color) !important;
+            border: none;
+            color: white;
+        }
+
+        .url-item .btn-primary:hover {
+            background: var(--primary-dark) !important;
+            transform: translateY(-1px);
+        }
+
+        .url-item .btn-success {
+            background: var(--primary-dark) !important;
+            border: none;
+            color: white;
+        }
+
+        .url-item .btn-success:hover {
+            background: var(--primary-color) !important;
+            transform: translateY(-1px);
+        }
+
+        /* Better mobile responsiveness for URL section */
+        @media (max-width: 768px) {
+            .url-item {
+                margin-bottom: 15px;
+            }
+
+            .url-item .input-group {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .url-item .form-control {
+                border-radius: var(--border-radius);
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+
+            .url-item .btn {
+                border-radius: var(--border-radius);
+                padding: 12px;
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+            }
+
+            .url-item .btn i {
+                font-size: 1rem;
+            }
+        }
+
+        /* Small screen optimization */
+        @media (max-width: 380px) {
+            .url-item .btn {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header">
+            <h1><i class="fas fa-share-alt"></i> Wi-Fi File Sharing</h1>
+        </div>
+
+        <div class="access-info alert alert-info" role="alert">
+            <h4 class="alert-heading mb-3"><i class="fas fa-globe"></i> Access Information</h4>
+            
+            <div class="access-links">
+                <!-- Local Network URLs -->
+                <div class="access-section mb-4">
+                    <h5><i class="fas fa-wifi"></i> Local Network Access</h5>
+                    <div class="url-list">
+                        {% for url_info in access_urls %}
+                            {% if url_info.type == 'Local Network' %}
+                            <div class="url-item mb-2">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" value="{{ url_info.url }}" readonly>
+                                    <button class="btn btn-primary" onclick="copyUrl(this)" data-url="{{ url_info.url }}">
+                                        <i class="fas fa-copy"></i> Copy
+                                    </button>
+                                    <button class="btn btn-success" onclick="shareUrl('{{ url_info.url }}')">
+                                        <i class="fas fa-share-alt"></i> Share
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Public Access URLs -->
+                <div class="access-section">
+                    <h5><i class="fas fa-globe"></i> Public Access</h5>
+                    <div class="url-list">
+                        {% for url_info in access_urls %}
+                            {% if url_info.type == 'Public Access' %}
+                            <div class="url-item mb-2">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" value="{{ url_info.url }}" readonly>
+                                    <button class="btn btn-primary" onclick="copyUrl(this)" data-url="{{ url_info.url }}">
+                                        <i class="fas fa-copy"></i> Copy
+                                    </button>
+                                    <button class="btn btn-success" onclick="shareUrl('{{ url_info.url }}')">
+                                        <i class="fas fa-share-alt"></i> Share
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="session-section">
+            <h4>Session Management</h4>
+            <button class="btn btn-primary" id="generateCodeBtn">Generate Session Code</button>
+            <div class="mt-2" id="sessionCode" style="display:none;">
+                <strong>Your Session Code: </strong><span id="codeDisplay"></span>
+            </div>
+            <div class="mt-3">
+                <input type="text" id="joinCodeInput" placeholder="Enter Session Code" class="form-control" />
+                <button class="btn btn-success mt-2" id="joinSessionBtn">Join Session</button>
+            </div>
+        </div>
+
+        <div class="upload-section">
+            <div class="drag-area" id="dragArea">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h4>Drag & Drop files here</h4>
+                <p>or</p>
+                <button class="btn btn-primary" onclick="document.getElementById('file').click()">
+                    Choose File
+                </button>
+                <input type="file" id="file" hidden>
+            </div>
+            <div class="progress">
+                <div class="progress-bar progress-bar-striped progress-bar-animated"></div>
+            </div>
+            <div id="status" class="text-center mt-2"></div>
+        </div>
+
+        <div class="files-section">
+            <div class="files-header">
+                <h3><i class="fas fa-folder-open"></i> Available Files</h3>
+                <div class="sort-buttons">
+                    <button class="btn" onclick="sortFiles('name')">
+                        <i class="fas fa-sort-alpha-down"></i> Name
+                    </button>
+                    <button class="btn" onclick="sortFiles('date')">
+                        <i class="fas fa-clock"></i> Date
+                    </button>
+                    <button class="btn" onclick="sortFiles('size')">
+                        <i class="fas fa-weight"></i> Size
+                    </button>
+                </div>
+            </div>
+
+            {% if files %}
+            <div class="list-group" id="fileList">
+                {% for file in files %}
+                <div class="file-item">
+                    <div class="row g-3">
+                        <div class="col-12 d-flex align-items-center">
+                            <div class="file-icon me-3">
+                                <i class="fas {{ get_file_icon(file) }} fa-lg"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="file-name">{{ file }}</div>
+                                <div class="file-meta">
+                                    <span><i class="fas fa-hdd"></i> {{ get_file_size(file) }}</span>
+                                    <span><i class="fas fa-clock"></i> {{ get_file_date(file) }}</span>
+                                    <span><i class="fas fa-user"></i> {{ files_info[file]['uploader'] }}</span>
+                                    <span><i class="fas fa-mobile-alt"></i> {{ files_info[file]['device'].split('(')[0] }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="action-buttons">
+                                <a href="/download/{{ file }}" class="btn btn-download">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                                <button onclick="deleteFile('{{ file }}')" class="btn btn-delete">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center text-muted mt-4">
+                <i class="fas fa-inbox fa-3x mb-3"></i>
+                <p>No files available for download.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="toast-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const dragArea = document.getElementById('dragArea');
+        const fileInput = document.getElementById('file');
+
+        // Drag & Drop functionality
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dragArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dragArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dragArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dragArea.classList.add('active');
+        }
+
+        function unhighlight(e) {
+            dragArea.classList.remove('active');
+        }
+
+        dragArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const file = dt.files[0];
+            fileInput.files = dt.files;
+            startUpload();
+        }
+
+        fileInput.addEventListener('change', () => {
+            startUpload();
+        });
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-white bg-${type}`;
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            document.querySelector('.toast-container').appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        async function startUpload() {
+            const file = fileInput.files[0];
+            const progressBar = document.querySelector('.progress-bar');
+            const progressDiv = document.querySelector('.progress');
+
+            if (!file) {
+                showToast('Please select a file to upload.', 'danger');
+                return;
+            }
+
+            progressDiv.style.display = 'block';
+            const chunkSize = 1024 * 1024; // 1MB chunks
+            const totalChunks = Math.ceil(file.size / chunkSize);
+            const statusDiv = document.getElementById("status");
+
+            try {
+                for (let i = 0; i < totalChunks; i++) {
+                    const chunk = file.slice(i * chunkSize, (i + 1) * chunkSize);
+                    const formData = new FormData();
+                    formData.append("chunk", chunk);
+                    formData.append("filename", file.name);
+                    formData.append("chunkIndex", i);
+                    formData.append("totalChunks", totalChunks);
+
+                    const progress = Math.round(((i + 1) / totalChunks) * 100);
+                    statusDiv.innerHTML = `Uploading: ${progress}%`;
+                    progressBar.style.width = `${progress}%`;
+                    progressBar.setAttribute('aria-valuenow', progress);
+
+                    const response = await fetch("/upload-chunk", {
+                        method: "POST",
+                        body: formData,
+                    });
+
+                    if (!response.ok) throw new Error('Upload failed');
+                }
+
+                showToast('File uploaded successfully!');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } catch (error) {
+                showToast('Upload failed: ' + error.message, 'danger');
+                progressDiv.style.display = 'none';
+            }
+        }
+
+        let currentSort = { field: 'date', ascending: false };
+
+        function sortFiles(field) {
+            const fileList = document.getElementById('fileList');
+            const files = Array.from(fileList.children);
+            
+            if (currentSort.field === field) {
+                currentSort.ascending = !currentSort.ascending;
+            } else {
+                currentSort.field = field;
+                currentSort.ascending = true;
+            }
+
+            files.sort((a, b) => {
+                let valueA = a.dataset[field];
+                let valueB = b.dataset[field];
+                
+                if (field === 'name') {
+                    valueA = valueA.toLowerCase();
+                    valueB = valueB.toLowerCase();
+                } else {
+                    valueA = parseFloat(valueA);
+                    valueB = parseFloat(valueB);
+                }
+
+                if (valueA < valueB) return currentSort.ascending ? -1 : 1;
+                if (valueA > valueB) return currentSort.ascending ? 1 : -1;
+                return 0;
+            });
+
+            files.forEach(file => fileList.appendChild(file));
+            updateSortButtons(field);
+        }
+
+        function updateSortButtons(activeField) {
+            const buttons = document.querySelectorAll('.btn-group .btn-outline-primary');
+            buttons.forEach(button => {
+                button.classList.remove('active');
+                if (button.textContent.toLowerCase().includes(activeField)) {
+                    button.classList.add('active');
+                }
+            });
+        }
+
+        async function deleteFile(filename) {
+            if (!confirm(`Are you sure you want to delete ${filename}?`)) return;
+            
+            try {
+                const response = await fetch(`/delete/${filename}`, { method: 'DELETE' });
+                if (response.ok) {
+                    showToast('File deleted successfully');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    throw new Error('Failed to delete file');
+                }
+            } catch (error) {
+                showToast('Failed to delete file: ' + error.message, 'danger');
+            }
+        }
+
+        // Sort by date initially
+        setTimeout(() => sortFiles('date'), 100);
+
+        function copyUrl(button) {
+            const url = button.getAttribute('data-url');
+            navigator.clipboard.writeText(url).then(() => {
+                // Change button text temporarily
+                const originalHtml = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => {
+                    button.innerHTML = originalHtml;
+                }, 2000);
+            });
+        }
+
+        function shareUrl(url) {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'File Sharing URL',
+                    text: 'Access shared files using this link:',
+                    url: url
+                })
+                .catch(error => console.log('Error sharing:', error));
+            } else {
+                copyUrl(document.querySelector(`[data-url="${url}"]`).previousElementSibling);
+                showToast('URL copied to clipboard!');
+            }
+        }
+
+        document.getElementById('generateCodeBtn').addEventListener('click', async () => {
+            const response = await fetch('/generate_code', { method: 'POST' });
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('codeDisplay').innerText = data.code;
+                document.getElementById('sessionCode').style.display = 'block';
+            } else {
+                showToast('Failed to generate code.', 'danger');
+            }
+        });
+
+        document.getElementById('joinSessionBtn').addEventListener('click', async () => {
+            const code = document.getElementById('joinCodeInput').value;
+            const userName = prompt("Enter your name:");  // Prompt for user name
+            const response = await fetch('/join_session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, user_name: userName })  // Send user name
+            });
+            if (response.ok) {
+                const data = await response.json();
+                showToast(`Session joined successfully! Current users: ${data.users.join(', ')}`, 'success');
+            } else {
+                showToast('Invalid code!', 'danger');
+            }
+        });
+    </script>
+</body>
+</html> 
